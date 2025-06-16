@@ -123,4 +123,12 @@ interface ApiService {
     suspend fun getFileFromIPFS(
         @Path("cid") cid: String
     ): ResponseBody
+
+    /* ===================== Public ApiService =======================*/
+    @GET("plants/public/{plantId}/history")
+    suspend fun getPlantTransactionHistory(
+        @Path("plantId") plantId: String,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 10
+    ): DataClassResponses.TransactionHistoryResponse
 }

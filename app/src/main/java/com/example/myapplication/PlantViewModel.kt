@@ -5,6 +5,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.data.DataClassResponses
@@ -94,34 +96,6 @@ class PlantViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e("AddPlant", "Exception: ${e.message}", e)
                 onError("Terjadi kesalahan: ${e.message}")
-            }
-        }
-    }
-
-    fun syncPlantToPublic(plantId: String) {
-        viewModelScope.launch {
-            try {
-                // Ambil token JWT dari preferences
-                val jwtTokenRaw = PreferencesHelper.getJwtToken(context)
-                val jwtToken = "Bearer ${jwtTokenRaw ?: ""}"
-
-                // Memanggil API backend untuk sinkronisasi
-                val response = apiService.syncPlantToPublic(
-                    token = jwtToken,
-                    plantId = plantId
-                )
-
-                if (response.success) {
-                    // Menampilkan pesan sukses
-                    Log.d("syncPlant", "Sinkronisasi berhasil dengan txHash: ${response.publicTx}")
-                    Toast.makeText(context, "Tanaman berhasil disinkronkan ke jaringan publik!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Log.e("syncPlant", "Gagal sinkronkan tanaman")
-                    Toast.makeText(context, "Gagal sinkronkan tanaman ke jaringan publik", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Log.e("syncPlant", "Error: ${e.message}")
-                Toast.makeText(context, "Terjadi kesalahan saat sinkronisasi", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -343,6 +317,16 @@ class PlantViewModel @Inject constructor(
         }
     }
 
+    // ==================== Transaction History ====================
+    private val _transactionHistory = MutableLiveData<List<DataClassResponses.TransactionRecord>>()
+    val transactionHistory: LiveData<List<DataClassResponses.TransactionRecord>> = _transactionHistory
+
+    private val _isLoadingHistory = MutableLiveData<Boolean>()
+    val isLoadingHistory: LiveData<Boolean> = _isLoadingHistory
+
+    private val _historyPagination = MutableLiveData<DataClassResponses.PaginationInfo>()
+    val historyPagination: LiveData<DataClassResponses.PaginationInfo> = _historyPagination
+
     // Untuk Menambahkan Rating pada tanaman
     fun ratePlant(
         token: String,
@@ -396,5 +380,71 @@ class PlantViewModel @Inject constructor(
                 Log.e("RefreshDetail", "Error: ${e.message}")
             }
         }
+    }
+
+    // ==================== Transaction History Functions ====================
+    fun fetchPlantTransactionHistory(
+        plantId: String,
+        page: Int = 1,
+        limit: Int = 10
+    ) {
+        viewModelScope.launch {
+            try {
+                _isLoadingHistory.value = true
+                Log.d("TransactionHistory", "Fetching history for plantId: $plantId, page: $page")
+
+                val response = apiService.getPlantTransactionHistory(
+                    plantId = plantId,
+                    page = page,
+                    limit = limit
+                )
+
+                if (response.success) {
+                    if (page == 1) {
+                        // Jika halaman pertama, replace data
+                        _transactionHistory.value = response.data
+                    } else {
+                        // Jika halaman selanjutnya, append data
+                        val currentData = _transactionHistory.value ?: emptyList()
+                        _transactionHistory.value = currentData + response.data
+                    }
+                    _historyPagination.value = response.pagination
+                    Log.d("TransactionHistory", "History loaded: ${response.data.size} records")
+                } else {
+                    Log.e("TransactionHistory", "Failed to load history")
+                    if (page == 1) {
+                        _transactionHistory.value = emptyList()
+                    }
+                }
+            } catch (e: IOException) {
+                val errorMsg = "Error jaringan: ${e.message}"
+                Log.e("TransactionHistory", errorMsg, e)
+                if (page == 1) {
+                    _transactionHistory.value = emptyList()
+                }
+            } catch (e: Exception) {
+                val errorMsg = "Error: ${e.message}"
+                Log.e("TransactionHistory", errorMsg, e)
+                if (page == 1) {
+                    _transactionHistory.value = emptyList()
+                }
+            } finally {
+                _isLoadingHistory.value = false
+            }
+        }
+    }
+
+    // Function untuk load more data (pagination)
+    fun loadMoreTransactionHistory(plantId: String) {
+        val currentPagination = _historyPagination.value
+        if (currentPagination?.hasNextPage == true) {
+            val nextPage = currentPagination.currentPage + 1
+            fetchPlantTransactionHistory(plantId, nextPage)
+        }
+    }
+
+    // Function untuk refresh history (reload dari page 1)
+    fun refreshTransactionHistory(plantId: String) {
+        fetchPlantTransactionHistory(plantId, 1)
     }
 }

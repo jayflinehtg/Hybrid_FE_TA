@@ -30,6 +30,7 @@ sealed class Screen(val route: String) {
     object EditPlant : Screen("editplant/{plantId}")
     object Detail : Screen("detail/{plantId}")
     object AddPlant : Screen("addPlant")
+    object TransactionHistory : Screen("transaction_history/{plantId}")
 }
 
 @AndroidEntryPoint
@@ -149,7 +150,26 @@ class MainActivity : ComponentActivity() {
                                     onEdit = {
                                         navController.navigate("editplant/$plantId")
                                     },
+                                    navController = navController,
                                     viewModel = plantViewModel
+                                )
+                            } else {
+                                Text("Plant ID tidak valid.")
+                            }
+                        }
+
+                        //History Composable
+                        composable(
+                            route = "transaction_history/{plantId}",
+                            arguments = listOf(navArgument("plantId") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val plantId = backStackEntry.arguments?.getString("plantId") ?: ""
+
+                            if (plantId.isNotEmpty()) {
+                                TransactionHistoryScreen(
+                                    plantId = plantId,
+                                    navController = navController,
+                                    viewModel = hiltViewModel()
                                 )
                             } else {
                                 Text("Plant ID tidak valid.")

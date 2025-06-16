@@ -79,12 +79,26 @@ class DataClassResponses {
         @SerializedName("publicTx") val publicTx: String? // Add publicTx to capture the transaction hash
     )
 
-    // Data Class untuk EditPlant Response
+    data class GanacheResponse(
+        @SerializedName("txHash") val txHash: String,
+        @SerializedName("plantId") val plantId: String
+    )
+
+    data class PublicBlockchainResponse(
+        @SerializedName("txHash") val txHash: String,
+        @SerializedName("blockNumber") val blockNumber: String,
+        @SerializedName("gasUsed") val gasUsed: String
+    )
+
     data class EditPlantResponse(
         @SerializedName("success") val success: Boolean,
         @SerializedName("message") val message: String,
-        @SerializedName("txHash") val txHash: String,
-        @SerializedName("plantId") val plantId: String
+        @SerializedName("txHash") val txHash: String? = null,
+        @SerializedName("plantId") val plantId: String? = null,
+        @SerializedName("ganache") val ganache: GanacheResponse? = null,
+        @SerializedName("public") val public: PublicBlockchainResponse? = null,
+        @SerializedName("publicError") val publicError: String? = null,
+        @SerializedName("warning") val warning: String? = null
     )
 
     data class AverageRatingResponse(
@@ -144,4 +158,31 @@ class DataClassResponses {
         @SerializedName("message") val message: String,
         @SerializedName("txHash") val txHash: String?
     )
+
+    data class TransactionHistoryResponse(
+        @SerializedName("success") val success: Boolean,
+        @SerializedName("plantId") val plantId: String,
+        @SerializedName("data") val data: List<TransactionRecord>,
+        @SerializedName("pagination") val pagination: PaginationInfo
+    )
+
+    data class TransactionRecord(
+        @SerializedName("recordId") val recordId: String,
+        @SerializedName("ganacheTxHash") val ganacheTxHash: String,
+        @SerializedName("plantId") val plantId: String,
+        @SerializedName("userAddress") val userAddress: String,
+        @SerializedName("timestamp") val timestamp: String,
+        @SerializedName("transactionType") val transactionType: String,
+        @SerializedName("icon") val icon: String,
+        @SerializedName("formattedTimestamp") val formattedTimestamp: String
+    )
+
+    data class PaginationInfo(
+        @SerializedName("currentPage") val currentPage: Int,
+        @SerializedName("totalPages") val totalPages: Int,
+        @SerializedName("totalRecords") val totalRecords: Int,
+        @SerializedName("hasNextPage") val hasNextPage: Boolean,
+        @SerializedName("hasPreviousPage") val hasPreviousPage: Boolean
+    )
+
 }
