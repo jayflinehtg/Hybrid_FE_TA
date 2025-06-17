@@ -155,7 +155,7 @@ class PlantViewModel @Inject constructor(
                     } catch (e: Exception) {
                         null
                     }
-                    val avgRating = ratingResponse?.averageRating?.toDoubleOrNull() ?: 0.0
+                    val avgRating = ratingResponse?.averageRating?: 0.0
                     RatedPlant(plant, avgRating)
                 }
                 _ratedPlantList.value = ratedResults
@@ -192,7 +192,7 @@ class PlantViewModel @Inject constructor(
                         } catch (e: Exception) {
                             null
                         }
-                        val avgRating = ratingResponse?.averageRating?.toDoubleOrNull() ?: 0.0
+                        val avgRating = ratingResponse?.averageRating ?: 0.0
                         RatedPlant(plant, avgRating)
                     }
 
@@ -257,7 +257,7 @@ class PlantViewModel @Inject constructor(
                         _selectedPlant.value = detailResponse.plant
 
                         val ratingResponse = apiService.getAverageRating(plantId)
-                        _selectedRating.value = ratingResponse.averageRating.toDoubleOrNull() ?: 0.0
+                        _selectedRating.value = ratingResponse.averageRating
 
                         onSuccess(response.txHash ?: "Like berhasil")
                     } catch (e: Exception) {
@@ -345,7 +345,7 @@ class PlantViewModel @Inject constructor(
                         _selectedPlant.value = detailResponse.plant
 
                         val ratingResponse = apiService.getAverageRating(plantId)
-                        _selectedRating.value = ratingResponse.averageRating.toDoubleOrNull() ?: 0.0
+                        _selectedRating.value = ratingResponse.averageRating
 
                         // Update ratedPlantList
                         _ratedPlantList.value = _ratedPlantList.value.map { ratedPlant ->

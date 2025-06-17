@@ -103,7 +103,7 @@ class DataClassResponses {
 
     data class AverageRatingResponse(
         @SerializedName("success") val success: Boolean,
-        @SerializedName("averageRating") val averageRating: String
+        @SerializedName("averageRating") val averageRating: Double
     )
 
     data class RatedPlant(
